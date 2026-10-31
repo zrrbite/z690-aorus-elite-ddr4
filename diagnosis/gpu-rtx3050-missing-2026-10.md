@@ -44,7 +44,7 @@ The HDMI audio function `PCI\VEN_10DE&DEV_2291` is phantom as well. The link was
 
 | When | Event | Source |
 | --- | --- | --- |
-| 2026-06-05 onward | GPU live kernel events (TDR 0x141/0x117, 0x193, 0x1CC) and blue screens in `nvlddmkm` (06-06, 08-24, 10-23, 10-29) and `dxgmms2` (09-24, 09-26). 32 live kernel events and 7 blue screens by 10-30. | WER ReportArchive |
+| 2026-05-04 onward | WER archive holds 59 kernel reports: 53 live kernel events (25x 0x141 and 2x 0x117 GPU TDR, 11x 0x193 dxgkrnl watchdog, 2x 0x1CC, 1x 0x133, 12x 0x1A8/0x1B8 black-screen diagnostics) and 6 blue screens (3x 0x7E, 2x 0xA, 1x 0x50), faulting in `nvlddmkm` and `dxgmms2`. Windows was installed 2026-02-14, so the first eleven weeks were clean. | WER ReportArchive, `scripts/Get-CrashHistory.ps1` |
 | 2026-07-08 | Driver 610.74 installed | driver store |
 | 2026-09-05 | Display fell back to BasicDisplay after hibernate resume; fixed by cold restart; hibernation disabled | workstation-notes |
 | 2026-10-23 15:35 | Blue screen 0x1000007E (access violation) in `nvlddmkm`, driver 610.88 (probably Windows Update) | Kernel-Power 41 |
