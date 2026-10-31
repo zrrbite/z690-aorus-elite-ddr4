@@ -7,9 +7,9 @@
   the card was not detected at POST; no Windows driver can cause that.
 #>
 $patterns = @(
-  @{ Name = 'RTX 3050 (display)';        Match = '^PCI\VEN_10DE&DEV_2582' },
-  @{ Name = 'RTX 3050 (HDMI audio)';     Match = '^PCI\VEN_10DE&DEV_2291' },
-  @{ Name = 'CPU x16 root port (PEG10)'; Match = '^PCI\VEN_8086&DEV_460D' }
+  @{ Name = 'RTX 3050 (display)';        Like = 'PCI\VEN_10DE&DEV_2582*' },
+  @{ Name = 'RTX 3050 (HDMI audio)';     Like = 'PCI\VEN_10DE&DEV_2291*' },
+  @{ Name = 'CPU x16 root port (PEG10)'; Like = 'PCI\VEN_8086&DEV_460D*' }
 )
 $keys = 'DEVPKEY_Device_LocationInfo', 'DEVPKEY_Device_LastArrivalDate', 'DEVPKEY_Device_LastRemovalDate',
         'DEVPKEY_PciDevice_CurrentLinkSpeed', 'DEVPKEY_PciDevice_CurrentLinkWidth',
@@ -17,7 +17,7 @@ $keys = 'DEVPKEY_Device_LocationInfo', 'DEVPKEY_Device_LastArrivalDate', 'DEVPKE
 
 $all = Get-PnpDevice -ErrorAction SilentlyContinue
 foreach ($p in $patterns) {
-  $devs = @($all | Where-Object { $_.InstanceId -match $p.Match })
+  $devs = @($all | Where-Object { $_.InstanceId -like $p.Like })
   if ($devs.Count -eq 0) { "=== $($p.Name): NOT IN THE PNP DATABASE AT ALL"; continue }
   foreach ($d in $devs) {
     $present = if ($d.Present) { 'present' } else { 'absent' }

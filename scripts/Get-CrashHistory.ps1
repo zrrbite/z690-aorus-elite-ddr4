@@ -7,6 +7,9 @@
 .PARAMETER Since
   Start of the window. Default 180 days ago. The System log on this machine wraps after about
   a week (20 MB), so section 3 (WER) is the long-term memory.
+.NOTES
+  Non-elevated: section 3 falls back to folder names and creation times (code is in the name).
+  Elevated: section 3 also reads each Report.wer for exact event time and all parameters.
 #>
 param([datetime]$Since = (Get-Date).AddDays(-180))
 
@@ -41,25 +44,23 @@ $whea | Sort-Object TimeCreated | ForEach-Object {
 ""
 "## 3. Windows Error Reporting kernel events since $($Since.ToString('yyyy-MM-dd')) (long-term history)"
 $roots = "$env:ProgramData\Microsoft\Windows\WER\ReportArchive", "$env:ProgramData\Microsoft\Windows\WER\ReportQueue"
-Get-ChildItem $roots -Directory -ErrorAction SilentlyContinue |
+$rows = Get-ChildItem $roots -Directory -ErrorAction SilentlyContinue |
   Where-Object { $_.Name -match '^Kernel_|LiveKernelEvent|BlueScreen' } |
   ForEach-Object {
-    $wer = Join-Path $_.FullName 'Report.wer'
-    if (-not (Test-Path $wer)) { return }
-    $t = Get-Content $wer -ErrorAction SilentlyContinue
-    $get = { param($k) ($t | Where-Object { $_ -like "$k=*" } | Select-Object -First 1) -replace ('^' + [regex]::Escape($k) + '='), '' }
-    $ft = & $get 'EventTime'
-    $when = if ($ft) { [DateTime]::FromFileTime([int64]$ft) } else { $_.CreationTime }
-    [pscustomobject]@{
-      When   = $when
-      Type   = & $get 'EventType'
-      P1     = & $get 'Sig[0].Value'
-      P2     = & $get 'Sig[1].Value'
-      P3     = & $get 'Sig[2].Value'
-      P4     = & $get 'Sig[3].Value'
-      Folder = $_.Name
-    }
-  } | Where-Object { $_.When -ge $Since } | Sort-Object When -Descending |
-  Format-Table -AutoSize When, Type, P1, P2, P3, P4, Folder
-"LiveKernelEvent P1: 141/117 = GPU TDR (driver hung, device reset), 193 = dxgkrnl watchdog, 1CC = resource timeout, 1A8/1B8 = black-screen diagnostics."
-"BlueScreen P1 = bugcheck code; later parameters and the folder name show the faulting module (nvlddmkm, dxgmms2)."
+    $row = [ordered]@{ When = $_.CreationTime; Type = 'folder'; P1 = ''; P2 = ''; P3 = ''; P4 = ''; Folder = $_.Name }
+    if ($_.Name -match '^Kernel_([0-9A-Fa-f]+)_') { $row.P1 = $Matches[1] }
+    try {
+      $t = Get-Content (Join-Path $_.FullName 'Report.wer') -ErrorAction Stop
+      $get = { param($k) ($t | Where-Object { $_ -like "$k=*" } | Select-Object -First 1) -replace ('^' + [regex]::Escape($k) + '='), '' }
+      $ft = & $get 'EventTime'
+      if ($ft) { $row.When = [DateTime]::FromFileTime([int64]$ft) }
+      $row.Type = & $get 'EventType'
+      $row.P1 = & $get 'Sig[0].Value'; $row.P2 = & $get 'Sig[1].Value'
+      $row.P3 = & $get 'Sig[2].Value'; $row.P4 = & $get 'Sig[3].Value'
+    } catch { }
+    [pscustomobject]$row
+  } | Where-Object { $_.When -ge $Since } | Sort-Object When -Descending
+"Count: $(@($rows).Count)   (Type 'folder' = Report.wer not readable without elevation; P1 taken from the folder name)"
+$rows | Format-Table -AutoSize When, Type, P1, P2, P3, P4
+"P1 for live kernel events: 141/117 = GPU TDR (driver hung, device reset), 133 = DPC watchdog, 193 = dxgkrnl watchdog, 1CC = resource timeout, 1A8/1B8 = black-screen diagnostics."
+"Blue screens: P1 = bugcheck code; later parameters and the folder name show the faulting module (nvlddmkm, dxgmms2)."
