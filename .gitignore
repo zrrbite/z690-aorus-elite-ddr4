@@ -1,0 +1,5 @@
+# Firmware images and installers stay out of the repo
+*.zip
+*.exe
+*.bin
+Z690AORUSELITEDDR4.*
