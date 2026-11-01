@@ -9,10 +9,14 @@ Installed BIOS: **F5** (2021-12-17). Latest seen on the support page as of 2026-
 | Slot | Wired to | Occupant | Windows view |
 | --- | --- | --- | --- |
 | PCIEX16 (top, reinforced) | CPU, PCIe 5.0 x16 | Gigabyte RTX 3050 8 GB (an x8 card) | Root port `PCI\VEN_8086&DEV_460D` "Intel PEG10" at bus 0 dev 1 fn 0; card at bus 1 dev 0 fn 0 |
-| Lower x16-length slots | Chipset (Z690), x4 electrical | empty | Chipset root ports `PCI\VEN_8086&DEV_7AB8..7ABF` at bus 0 dev 28 |
-| M.2 | CPU (top slot) and chipset | 970 EVO Plus, 980 PRO | |
+| PCIEX4_1, PCIEX4_2 (x16-length, lower) | Chipset (Z690), PCIe 3.0 x4 electrical | empty | Chipset root ports `PCI\VEN_8086&DEV_7AB8..7ABF` at bus 0 dev 28 |
+| M2A_CPU | CPU, PCIe 4.0 x4 | one of the two NVMe drives | |
+| M2M_SB, M2Q_SB, M2P_SB | Chipset, PCIe 4.0 x4 (M2M_SB also takes SATA M.2) | one of the two NVMe drives | |
+| SATA | Chipset, 3 ports | empty | |
 
-Verify exact slot labels against the manual before quoting them to anyone; the names above follow the Z690 AORUS ELITE family layout.
+Slot names and electrical widths from Gigabyte's specification sheet for rev. 1.x (2026-11-01). The spec lists no bandwidth sharing between the PCIEX4 slots and the M.2 sockets; the only installation notices concern M.2 versus SATA (manual section 2-7). Which M.2 socket holds which drive is not recorded yet.
+
+**Putting the RTX 3050 in a PCIEX4 slot** (the card-or-board test): the card is x16-length and x8 electrical, so it fits, and PCIe negotiates the link down to x4 at Gen3. That is about a quarter of its usual bandwidth, fine for a detection test and even for light use. The card would appear under one of the 7AB8..7ABF chipset root ports, on a new bus number, as a new device instance. Set Initial Display Output to Auto or IGFX first so POST stays visible whatever happens.
 
 ## Firmware behaviour worth knowing
 
