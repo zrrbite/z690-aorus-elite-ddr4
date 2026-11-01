@@ -20,8 +20,8 @@
     \item 2026-11-01 morning: cold power cycle, card and 8-pin lead reseated. No change.
     \item 2026-11-01 17:31: card moved to a lower chipset slot, \textbf{detected} at Gen3 x4.
       17:37: back in the top slot, detected at Gen4 x8. Driver loaded; GPU 1 is back.
-    \item 59 GPU crash reports since 2026-05-04 remain unexplained. The driver update of
-      2026-10-29 was never the cause.
+    \item 59 GPU crash reports since 2026-05-04 remain unexplained. Driver 621.01 did not cause
+      the loss; it did lag on the desktop, and 617.42 replaced it at 20:03.
   \end{itemize}
   \reading{the card and the top slot both train again. The fault was in the link path and
     cleared with the slot change. Its cause is not identified, so it can come back.}
@@ -416,16 +416,14 @@
 
 \begin{frame}{Next steps}
   \begin{enumerate}\setlength{\itemsep}{0.15em}
-    \item \textbf{Leave the card in the top slot.} No automatic driver installs: decline what
-      NVIDIA App and Windows Update offer.
+    \item \textbf{Leave the card in the top slot.} Decline driver offers from NVIDIA App and Windows Update.
     \item \textbf{Watch it:} \texttt{scripts/Get-GpuState.ps1} after each boot for a week. Code 45
       again, or a link below Gen4 x8 under load, means the fault is back.
     \item \textbf{Crash history:} \texttt{scripts/Get-CrashHistory.ps1 -Since 2026-11-01} weekly.
       If the marginal link caused the May to October timeouts, they stop now.
-    \item \textbf{Clean driver install} per \texttt{drivers/nvidia.md} after a clean week.
+    \item \textbf{Driver:} 617.42 since 2026-11-01 evening; 621.01 lagged on the desktop. DDU in reserve.
     \item \textbf{Flash F35} at leisure. Optional now; worth doing before any new card.
-    \item \textbf{Record} the PSU label and which lower slot was used. Keep the vendor report as a
-      draft; do not submit while the card works.
+    \item \textbf{Record} the PSU label and the lower slot used; the vendor report stays a draft.
   \end{enumerate}
   \reading{every result goes in the Log table of the diagnosis note, dated. The vendor report
     is built from that table.}

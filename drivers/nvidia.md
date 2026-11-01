@@ -8,7 +8,8 @@ NVIDIA's release number is the last five digits of the Windows driver version: `
 | --- | --- | --- | --- |
 | 2026-07-08 | 610.74 (32.0.16.1074) | NVIDIA App; installer cached | Running at the 2026-09-05 display-fallback incident |
 | 2026-10-23 | 610.88 (32.0.16.1088) | Probably Windows Update | Blue screen the same day |
-| 2026-10-29 17:48 | 621.01 (32.0.16.2101) | NVIDIA App. "Setting clean install: 0", "Reboot not required", "Installation is successful." | Card vanished about 22 h later; not the cause (see diagnosis) |
+| 2026-10-29 17:48 | 621.01 (32.0.16.2101) | NVIDIA App. "Setting clean install: 0", "Reboot not required", "Installation is successful." | Card vanished about 22 h later; not the cause (see diagnosis). Once the card was back and driving the display (2026-11-01), this version lagged on the desktop; see below |
+| 2026-11-01 20:03 | 617.42 (32.0.16.1742, driver date 2026-09-30) | Standalone installer from NVIDIA's server, Custom > Perform a clean installation, NVIDIA App unticked. DDU not used. Boot 20:07 | Desktop lag gone. Card idles in P8/Gen1 on the desktop instead of cycling to P0. Installer file location not recorded |
 
 One orphaned driver-store folder (`nv_dispi.inf_amd64_6f3cfb7117944855`) has no inf; its version is unknown.
 
@@ -22,11 +23,17 @@ One orphaned driver-store folder (`nv_dispi.inf_amd64_6f3cfb7117944855`) has no 
 
 Installer log: `C:\ProgramData\NVIDIA Corporation\NVIDIA App\Logs\LOG.setup.exe.log`.
 
-## Known issue in 621.01
+## Known issues in 621.01
 
-NVIDIA acknowledges a transient black-screen bug in 621.01; the suggested rollback is 617.42. Different symptom from this card's failure: the display drops and comes back, the card stays on the bus.
+NVIDIA acknowledges a video-freeze and transient black-screen bug in 621.01; the suggested rollback is 617.42. Users also report stutter and "Prefer maximum performance" not holding. Different symptom from this card's disappearance: the display drops and comes back, the card stays on the bus.
+
+**Seen here, 2026-11-01 18:00 to 20:03.** With the monitor on the card under 621.01: a visible hitch every few seconds when typing or dragging windows, mouse cursor smooth, none of it on the onboard output. CPU, disk and memory idle; no stall above 33 ms in a 40 s user-mode timing loop; no TDR, Display or `nvlddmkm` events; no WHEA on the GPU path; PCIe replay counter 0. The card cycled P8/Gen1 to P0/Gen4 every 2 to 4 s at 0 to 8 % load, and the driver's DPC core spiked to 11 % at each transition. "Prefer maximum performance" did not stop the cycling. Locking the clocks (`nvidia-smi -lgc 1792,1792`, `-lmc 7001,7001`, elevated) stopped the cycling but not the lag. Installing 617.42 with the installer's clean-install option removed the lag; on 617.42 the card stays in P8/Gen1 on the desktop. Conclusion: a 621.01 driver problem, not the card.
+
+Download used: `https://us.download.nvidia.com/Windows/617.42/617.42-desktop-win10-win11-64bit-international-dch-whql.exe` (945 MB).
 
 ## Clean-install plan, once the card is back on the bus
+
+Status 2026-11-01 20:10: step 4 done with 617.42 (installer clean install, no DDU, step 3 skipped). Steps 2 and 5 **not done yet**: the Windows Update driver block is not set, and NVIDIA App (still installed, 11.0.9) has not had automatic driver downloads turned off. Step 6 baseline: `Get-GpuState.ps1` shows the card at Gen4 x8, driver 32.0.16.1742. DDU stays in reserve if problems return.
 
 Do this before the card receives any other driver. The crash history spans at least four driver packages, so a clean slate removes one variable before deciding the card is faulty.
 
