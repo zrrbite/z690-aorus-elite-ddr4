@@ -16,7 +16,7 @@ Installed BIOS: **F5** (2021-12-17). Latest seen on the support page as of 2026-
 
 Slot names and electrical widths from Gigabyte's specification sheet for rev. 1.x (2026-11-01). The spec lists no bandwidth sharing between the PCIEX4 slots and the M.2 sockets; the only installation notices concern M.2 versus SATA (manual section 2-7). Which M.2 socket holds which drive is not recorded yet.
 
-**Putting the RTX 3050 in a PCIEX4 slot** (the card-or-board test): the card is x16-length and x8 electrical, so it fits, and PCIe negotiates the link down to x4 at Gen3. That is about a quarter of its usual bandwidth, fine for a detection test and even for light use. The card would appear under one of the 7AB8..7ABF chipset root ports, on a new bus number, as a new device instance. Set Initial Display Output to Auto or IGFX first so POST stays visible whatever happens.
+**Putting the RTX 3050 in a PCIEX4 slot** (the card-or-board test): the card is x16-length and x8 electrical, so it fits, and PCIe negotiates the link down to x4 at Gen3. That is about a quarter of its usual bandwidth, fine for a detection test and even for light use. The card would appear under one of the 7AB8..7ABF chipset root ports, on a new bus number, as a new device instance. Set Initial Display Output to Auto or IGFX first so POST stays visible whatever happens. **Done 2026-11-01 17:31:** the card appeared on bus 6 at Gen3 x4 under a chipset root port, as expected, and its HDMI audio function started. Moved back to PCIEX16 at 17:37 it trained at Gen4 x8 again, so the top slot works too. The stale bus-6 instances stay in Device Manager as phantom entries.
 
 ## Firmware behaviour worth knowing
 

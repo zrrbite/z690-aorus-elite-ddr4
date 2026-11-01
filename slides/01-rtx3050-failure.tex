@@ -4,7 +4,7 @@
 \title[RTX 3050 failure]{RTX 3050: gone from the PCIe bus}
 \subtitle{What happened on ZRRBITE-PC, what the evidence says,\\
   and what to do next, including the BIOS update}
-\date{Status as of 2026-11-01, after the cold power cycle and reseat}
+\date{Status as of 2026-11-01 evening: the card is back after the slot test}
 
 \begin{document}
 
@@ -13,18 +13,18 @@
 % ---------------------------------------------------------------
 \begin{frame}{Where things stand}
   \begin{itemize}\setlength{\itemsep}{0.2em}
-    \item Since 2026-10-30 16:41 the RTX 3050 is not detected at power-on.
-      Windows runs on the Intel UHD 770; the monitor is on the onboard output.
-    \item Card, HDMI audio function and the CPU's x16 root port are all \emph{phantom}
+    \item From 2026-10-30 16:41 to 2026-11-01 17:31 the RTX 3050 was not detected at power-on.
+      Windows ran on the Intel UHD 770; the monitor on the onboard output.
+    \item Card, HDMI audio function and the CPU's x16 root port were all \emph{phantom}
       (Device Manager Code 45): absent from the bus, not failing to start.
-    \item 2026-11-01: cold power cycle, card and 8-pin lead reseated. No change.
-    \item Both fans spin for a few seconds at power-on, then stop; the heatsink gets hot with no
-      load. The card has power and its firmware runs, but the PCIe link never trains.
-    \item 59 GPU crash reports since 2026-05-04. The driver update of 2026-10-29 is the last
-      software change, not the cause.
+    \item 2026-11-01 morning: cold power cycle, card and 8-pin lead reseated. No change.
+    \item 2026-11-01 17:31: card moved to a lower chipset slot, \textbf{detected} at Gen3 x4.
+      17:37: back in the top slot, detected at Gen4 x8. Driver loaded; GPU 1 is back.
+    \item 59 GPU crash reports since 2026-05-04 remain unexplained. The driver update of
+      2026-10-29 was never the cause.
   \end{itemize}
-  \reading{a device the BIOS cannot see cannot be fixed or broken by a driver.
-    What remains is physical: the card, or the board's x16 port.}
+  \reading{the card and the top slot both train again. The fault was in the link path and
+    cleared with the slot change. Its cause is not identified, so it can come back.}
   \source{diagnosis/gpu-rtx3050-missing-2026-10.md}
 \end{frame}
 
@@ -258,13 +258,13 @@
       \textbf{First, without opening the case}
       \begin{enumerate}\setlength{\itemsep}{0.3em}
         \item Enter setup (Del). Look for the card anywhere in the device listing.
-        \item Top slot link speed: Gen3, then Gen1. A marginal PCIe PHY sometimes trains only at
-          the lowest rate.
+        \item Top slot link speed: Gen3, then Gen1.
         \item Load Optimized Defaults (F7), Initial Display Output = IGFX, save (F10).
         \item Boot, run \texttt{scripts/Get-GpuState.ps1}.
       \end{enumerate}
       \medskip
-      Then the one test that separates card from board:
+      \textbf{Run 2026-11-01:} the card appeared in both slots. Neither branch applied;
+      the link was marginal, not dead.
     \end{column}
     \begin{column}{0.58\textwidth}
       \centering
@@ -298,14 +298,14 @@
     \midrule
     1 & Cold power cycle: PSU off, power button held, wait, power on, watch the fans & \donetag\ 2026-11-01 \\
     2 & Reseat the card and the 8-pin lead; inspect contacts, slot, board and pins; read the PSU label & \donetag\ 2026-11-01, PSU label pending \\
-    3 & BIOS settings: link speed Gen3 then Gen1, Optimized Defaults, Initial Display Output & \pendingtag \\
-    4 & Card or board: card in a chipset slot; then F35 flash if the board side is suspect; another PC & \pendingtag \\
-    5 & If the card returns: block automatic driver installs, DDU clean install, watch for the crash pattern & \pendingtag \\
-    6 & If it does not: finish the vendor report with PSU, serial and purchase details, and submit & \pendingtag \\
+    3 & BIOS settings: link speed Gen3 then Gen1, Optimized Defaults. Overtaken by step 4 & \flagtag{muted}{skipped} \\
+    4 & Card or board: card in a chipset slot. Result: detected there, and again in the top slot & \donetag\ 2026-11-01 \\
+    5 & If the card returns: block automatic driver installs, watch for a week, DDU clean install & \flagtag{accent}{active} \\
+    6 & If it does not, or vanishes again: finish the vendor report (PSU, serial, purchase) and submit & \flagtag{muted}{on hold} \\
     \bottomrule
   \end{tabularx}
-  \reading{steps 1 and 2 cost nothing and told us the card is powered. Step 3 is free.
-    Step 4 answers the question.}
+  \reading{steps 1 and 2 told us the card was powered. Step 4 brought it back without saying why.
+    Step 5 is where we are.}
   \source{diagnosis/gpu-rtx3050-missing-2026-10.md, Procedure and Log}
 \end{frame}
 
@@ -416,14 +416,16 @@
 
 \begin{frame}{Next steps}
   \begin{enumerate}\setlength{\itemsep}{0.15em}
-    \item \textbf{BIOS settings test}, no case opening: link speed Gen3, then Gen1; Optimized Defaults.
-    \item \textbf{Slot test:} card in a lower slot. This decides card versus board.
-    \item \textbf{Flash F35} if the board side is suspect, as above. Then retest the top slot.
-    \item \textbf{Record} the PSU label, and whether the heatsink is warm after ten minutes idle.
-    \item \textbf{If the card returns:} no automatic driver installs; DDU clean install per
-      \texttt{drivers/nvidia.md}; watch for the crash pattern.
-    \item \textbf{If it does not:} finish the vendor report (serial from the label, PSU, purchase
-      details, checklist results) and submit it.
+    \item \textbf{Leave the card in the top slot.} No automatic driver installs: decline what
+      NVIDIA App and Windows Update offer.
+    \item \textbf{Watch it:} \texttt{scripts/Get-GpuState.ps1} after each boot for a week. Code 45
+      again, or a link below Gen4 x8 under load, means the fault is back.
+    \item \textbf{Crash history:} \texttt{scripts/Get-CrashHistory.ps1 -Since 2026-11-01} weekly.
+      If the marginal link caused the May to October timeouts, they stop now.
+    \item \textbf{Clean driver install} per \texttt{drivers/nvidia.md} after a clean week.
+    \item \textbf{Flash F35} at leisure. Optional now; worth doing before any new card.
+    \item \textbf{Record} the PSU label and which lower slot was used. Keep the vendor report as a
+      draft; do not submit while the card works.
   \end{enumerate}
   \reading{every result goes in the Log table of the diagnosis note, dated. The vendor report
     is built from that table.}
