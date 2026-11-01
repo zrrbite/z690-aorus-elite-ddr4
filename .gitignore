@@ -3,3 +3,6 @@
 *.exe
 *.bin
 Z690AORUSELITEDDR4.*
+
+# Built slides are kept (the global gitignore may drop PDFs)
+!slides/*.pdf

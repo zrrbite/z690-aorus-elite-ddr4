@@ -16,6 +16,7 @@ worked through. The OS-level counterpart is the sibling repo
 | GPU failure, Oct 2026: RTX 3050 gone from the PCIe bus | [diagnosis/gpu-rtx3050-missing-2026-10.md](diagnosis/gpu-rtx3050-missing-2026-10.md) |
 | NVIDIA driver notes and clean-install plan | [drivers/nvidia.md](drivers/nvidia.md) |
 | Remote access (SSH) | [remote-access/ssh.md](remote-access/ssh.md) |
+| Slides: the GPU failure and the BIOS update as a Beamer deck | [slides/01-rtx3050-failure.pdf](slides/01-rtx3050-failure.pdf) |
 
 ## Scripts
 
@@ -24,6 +25,13 @@ worked through. The OS-level counterpart is the sibling repo
 | [`scripts/Get-GpuState.ps1`](scripts/Get-GpuState.ps1) | Presence, problem code, last arrival and PCIe link state of the RTX 3050, its audio function and the CPU x16 root port. Includes phantom devices. Run first whenever the card misbehaves. |
 | [`scripts/Get-CrashHistory.ps1`](scripts/Get-CrashHistory.ps1) | Unexpected shutdowns decoded (blue screen vs power button vs power loss), WHEA hardware errors, and the Windows Error Reporting history of GPU live kernel events and blue screens. |
 | [`scripts/Get-HardwareInventory.ps1`](scripts/Get-HardwareInventory.ps1) | Board, BIOS, CPU, RAM, disks, video. Paste into hardware/inventory.md after a change. |
+
+## Slides
+
+One Beamer deck summarising the GPU failure, the evidence, the remaining tests and the BIOS
+update: [RTX 3050: gone from the PCIe bus](slides/01-rtx3050-failure.pdf). Source in
+[`slides/`](slides/); `make` there rebuilds it with [Tectonic](https://tectonic-typesetting.github.io/),
+same setup as sourdough-science. The deck is derived from the notes; where they disagree, the note wins.
 
 ## Conventions
 

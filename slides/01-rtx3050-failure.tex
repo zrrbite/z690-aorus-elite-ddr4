@@ -1,0 +1,449 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\input{preamble}
+
+\title[RTX 3050 failure]{RTX 3050: gone from the PCIe bus}
+\subtitle{What happened on ZRRBITE-PC, what the evidence says,\\
+  and what to do next, including the BIOS update}
+\date{Status as of 2026-11-01, after the cold power cycle and reseat}
+
+\begin{document}
+
+\begin{frame}[plain]\titlepage\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{Where things stand}
+  \begin{itemize}\setlength{\itemsep}{0.2em}
+    \item Since 2026-10-30 16:41 the RTX 3050 is not detected at power-on.
+      Windows runs on the Intel UHD 770; the monitor is on the onboard output.
+    \item Card, HDMI audio function and the CPU's x16 root port are all \emph{phantom}
+      (Device Manager Code 45): absent from the bus, not failing to start.
+    \item 2026-11-01: cold power cycle, card and 8-pin lead reseated. No change.
+    \item Both fans spin for a few seconds at power-on, then stop; the heatsink gets hot with no
+      load. The card has power and its firmware runs, but the PCIe link never trains.
+    \item 59 GPU crash reports since 2026-05-04. The driver update of 2026-10-29 is the last
+      software change, not the cause.
+  \end{itemize}
+  \reading{a device the BIOS cannot see cannot be fixed or broken by a driver.
+    What remains is physical: the card, or the board's x16 port.}
+  \source{diagnosis/gpu-rtx3050-missing-2026-10.md}
+\end{frame}
+
+% ===============================================================
+\section{The machine}
+
+\begin{frame}{What is in the box}
+  \footnotesize
+  \renewcommand{\arraystretch}{1.08}
+  \begin{tabularx}{\textwidth}{@{}>{\bfseries\raggedright}p{2.6cm}L@{}}
+    \toprule
+    Motherboard & Gigabyte Z690 AORUS ELITE DDR4 rev.\ 1.x, BIOS \textbf{F5} (2021-12-17, launch era) \\
+    CPU & Intel Core i7-12700K; UHD Graphics 770 integrated, now driving the display \\
+    Graphics card & Gigabyte GeForce RTX 3050 8\,GB, PCI 10DE:2582, subsystem 1458:4101, rev.\ A1.
+      Top slot (CPU PCIe x16); the card is natively x8; 130\,W, one 8-pin lead \\
+    Memory & 2\,$\times$\,16\,GB DDR4 (G.Skill F4-4000C18), running at 2666\,MT/s, XMP off \\
+    Storage & Samsung 970 EVO Plus 500\,GB, Samsung 980 PRO 1\,TB (Windows) \\
+    Network & Realtek RTL8125 2.5GbE on a chipset root port (bus 5, Gen2 x1) \\
+    Power supply & \textbf{unknown}: label still to be read \\
+    OS & Windows 11 Pro for Workstations, build 26200, installed 2026-02-14.
+      Hibernation and Fast Startup off since 2026-09-05, so Shut down is a true power-off \\
+    Monitor & Lenovo P34w-20, 3440\,$\times$\,1440 \\
+    \bottomrule
+  \end{tabularx}
+  \source{hardware/inventory.md, scripts/Get-HardwareInventory.ps1}
+\end{frame}
+
+% ===============================================================
+\section{What happened}
+
+\begin{frame}{Timeline}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.0}
+  \begin{tabularx}{\textwidth}{@{}>{\raggedright}p{3.1cm}L@{}}
+    \toprule
+    \textbf{When} & \textbf{Event} \\
+    \midrule
+    2026-05-04 & First GPU timeout dump (0x141). Fifteen more in May. \\
+    2026-06 to 2026-10 & Escalation: black-screen dumps, graphics watchdog dumps, seven blue screens \\
+    2026-10-23 04:43 & Driver 610.88 arrives via Windows Update; blue screen 0x7E in nvlddmkm the same day \\
+    2026-10-29 13:53 & Blue screen 0x50 in nvlddmkm \\
+    2026-10-29 17:48 & Driver 621.01 installed via NVIDIA App. Clean install, no firmware update. Card runs 22\,h \\
+    2026-10-30 16:12:22 & System hangs. Last log write; no crash dump \\
+    2026-10-30 16:41:18 & Power button held to force off (Kernel-Power 41 carries the timestamp). Boot at 16:41:44: card, audio, root port absent \\
+    2026-10-30 16:43:13 & Second power-button hold; boot at 16:44:00, same result. Monitor moved to onboard HDMI \\
+    2026-10-31 & Software diagnosis, SSH set up as a lifeline, vendor report drafted \\
+    2026-11-01 08:48 to 09:00 & Cold power cycle, card and 8-pin reseated, inspection clean. Two clean boots, card still absent \\
+    \bottomrule
+  \end{tabularx}
+  \source{System log (Kernel-Power, Kernel-General), WER ReportArchive, NVIDIA setup log}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{The signature: three devices missing at once}
+  \centering
+  \scalebox{0.88}{\begin{tikzpicture}[node distance=0.25cm and 0.55cm]
+    \node[box=2.5cm] (cpu) {\textbf{CPU}\\i7-12700K};
+    \node[gone=3.1cm,right=of cpu] (peg)
+      {\textbf{PEG10 root port}\\8086:460D, bus 0 dev 1\\\phantomtag};
+    \node[gone=2.7cm,right=of peg] (slot)
+      {\textbf{PCIEX16 slot}\\CPU PCIe 5.0 x16\\\muted{no link trained}};
+    \node[gone=3.2cm,anchor=west] (gpu) at ($(slot.east)+(0.55,0.78)$)
+      {\textbf{RTX 3050} (fn 0)\\10DE:2582\\\phantomtag};
+    \node[gone=3.2cm,anchor=west] (aud) at ($(slot.east)+(0.55,-0.78)$)
+      {\textbf{HDMI audio} (fn 1)\\10DE:2291\\\phantomtag};
+    \node[box=2.5cm,below=0.25cm of cpu] (igpu) {\textbf{UHD 770}\\8086:4680\\\presenttag};
+    \node[box=2.5cm,below=0.25cm of igpu] (pch) {\textbf{Z690 chipset}};
+    \node[box=3.1cm,right=of pch] (rp) {\textbf{Root port}\\8086:7ABA, bus 0 dev 28 fn 2\\\presenttag};
+    \node[box=2.7cm,right=of rp] (nic) {\textbf{RTL8125} 2.5GbE\\\muted{corrected errors\\at every boot}};
+    \draw[gonearrow] (cpu) -- (peg);
+    \draw[gonearrow] (peg) -- (slot);
+    \draw[gonearrow] (slot.east) -- (gpu.west);
+    \draw[gonearrow] (slot.east) -- (aud.west);
+    \draw[arrow] (cpu) -- (igpu);
+    \draw[arrow] (igpu) -- (pch);
+    \draw[arrow] (pch) -- (rp);
+    \draw[arrow] (rp) -- (nic);
+  \end{tikzpicture}}
+  \par\smallskip\raggedright\scriptsize
+  The root port belongs to the CPU, not the card; the firmware exposes it only when something trains
+  a link in that slot at POST. Three phantoms, no removal timestamps: \emph{card not detected at POST}.
+  \source{scripts/Get-GpuState.ps1 on 2026-11-01; last recorded link on 2026-10-29 was Gen4 x8, no AER errors}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{Why it is not the driver}
+  \begin{itemize}\setlength{\itemsep}{0.25em}
+    \item The root port is enumerated by the BIOS before Windows loads. No driver runs yet.
+    \item The three devices carry no removal timestamp: not disabled or hot-removed in a
+      session, simply absent at the boots of 16:41 and 16:44 and at every boot since.
+    \item 621.01 installed cleanly: no firmware or GOP update component, no reboot required,
+      and the card ran normally for 22 hours afterwards.
+    \item Faults span four driver packages over six months (595.79, 610.74, 610.88, 621.01).
+    \item The 621.01 driver package and its display container service are still installed;
+      \texttt{nvidia-smi} reports no device.
+  \end{itemize}
+  \reading{rolling back or reinstalling a driver cannot bring back a device the firmware does
+    not see. Driver work only matters after the card reappears, and then as a DDU clean install.}
+  \source{drivers/nvidia.md; NVIDIA LOG.setup.exe.log; Kernel-PnP and UserPnp events}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{Six months of warnings}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.56\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \begin{axis}[ybar stacked,bar width=17pt,width=\linewidth,height=4.5cm,
+            symbolic x coords={May,Jun,Jul,Aug,Sep,Oct},xtick=data,
+            ymin=0,ymax=18,ylabel={crash reports per month},
+            ylabel style={font=\scriptsize},tick label style={font=\scriptsize},
+            axis lines*=left,enlarge x limits=0.12,ymajorgrids,grid style={muted!30},
+            legend style={font=\tiny,at={(0.98,0.97)},anchor=north east,legend columns=1,draw=none,fill=none}]
+          \addplot[ybar,fill=ink!75,draw=none] coordinates {(May,15) (Jun,12) (Jul,0) (Aug,0) (Sep,0) (Oct,0)};
+          \addlegendentry{GPU timeout, 0x141/0x117}
+          \addplot[ybar,fill=accent!85,draw=none] coordinates {(May,0) (Jun,2) (Jul,8) (Aug,0) (Sep,0) (Oct,2)};
+          \addlegendentry{black screen, 0x1A8/0x1B8}
+          \addplot[ybar,fill=muted!70,draw=none] coordinates {(May,0) (Jun,0) (Jul,3) (Aug,1) (Sep,6) (Oct,3)};
+          \addlegendentry{watchdog, 0x193/0x1CC}
+          \addplot[ybar,fill=flag,draw=none] coordinates {(May,0) (Jun,2) (Jul,0) (Aug,1) (Sep,2) (Oct,2)};
+          \addlegendentry{blue screen}
+        \end{axis}
+      \end{tikzpicture}
+    \end{column}
+    \begin{column}{0.42\textwidth}
+      \scriptsize
+      59 kernel reports from 2026-05-04 to 2026-10-31, all in the graphics stack:
+      52 live kernel events and 7 blue screens.
+      \smallskip
+      \begin{itemize}\setlength{\itemsep}{0.2em}
+        \item \textbf{May to June:} recoverable GPU timeouts; the driver reset the GPU and carried on
+        \item \textbf{July:} black-screen diagnostics; the display dropped out
+        \item \textbf{August to October:} kernel crashes in GPU memory-management code
+        \item \textbf{30 October:} the card stops enumerating
+      \end{itemize}
+      \smallskip
+      The two October black-screen dumps (2026-10-31) are from the integrated GPU, after the card
+      was gone.
+    \end{column}
+  \end{columns}
+  \source{C:/ProgramData/Microsoft/Windows/WER/ReportArchive; scripts/Get-CrashHistory.ps1}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{The seven blue screens}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.05}
+  \begin{tabularx}{\textwidth}{@{}p{2.9cm}p{1.5cm}L@{}}
+    \toprule
+    \textbf{When} & \textbf{Code} & \textbf{Where it crashed} \\
+    \midrule
+    2026-10-29 13:53 & 0x50 & nvlddmkm!\_clientUnmapInterBackRefMappings (NVIDIA kernel driver) \\
+    2026-10-23 18:35 & 0x7E & nvlddmkm!refRemoveInterMapping \\
+    2026-09-26 09:28 & 0x7E & dxgmms2!VIDMM\_GLOBAL::UnlockAllocation (DirectX video memory manager) \\
+    2026-09-24 00:06 & 0x7E & dxgmms2!VIDMM\_GLOBAL::MakeOneVirtualAddressRangeNotResident \\
+    2026-08-24 12:20 & 0xA  & nvlddmkm!CNvLAllocReference::unlinkFromAllLists \\
+    2026-06-06 23:07 & 0xA  & nt!MiCrashdumpRemovePte, while writing a crash dump \\
+    2026-06-06 12:58 & 0x133 & DPC watchdog, nvlddmkm!CNvLAdapter::lockallSubmissions \\
+    \bottomrule
+  \end{tabularx}
+  \reading{five of seven are inside the NVIDIA driver or DirectX's handling of the card's memory.
+    The signatures change from release to release; the component that fails does not.}
+  \source{WER ReportArchive folder names and Report.wer buckets; Application log, Windows Error Reporting 1001}
+\end{frame}
+
+% ===============================================================
+\section{What the hardware is telling us}
+
+\begin{frame}{Power and fans}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.44\textwidth}
+      \centering
+      \begin{tikzpicture}
+        \node[box=1.4cm] (psu) {\textbf{PSU}\\model unknown};
+        \node[box=1.6cm,right=0.45cm of psu,yshift=0.7cm] (slot) {\textbf{Slot}\\up to 75\,W};
+        \node[box=1.6cm,right=0.45cm of psu,yshift=-0.7cm] (aux) {\textbf{8-pin lead}\\up to 150\,W};
+        \node[box=1.6cm,right=0.45cm of slot,yshift=-0.7cm] (card) {\textbf{RTX 3050}\\130\,W rated};
+        \draw[arrow] (psu.east) -- (slot.west);
+        \draw[arrow] (psu.east) -- (aux.west);
+        \draw[arrow] (slot.east) -- (card.west);
+        \draw[arrow] (aux.east) -- (card.west);
+      \end{tikzpicture}
+      \par\medskip\scriptsize\raggedright
+      No software view of the card's power exists while it is off the bus. The 12\,V rails can be
+      checked at a spare connector with a multimeter (ATX tolerance $\pm$5\,\%) or a PSU tester;
+      HWMonitor only sees board sensors.
+    \end{column}
+    \begin{column}{0.54\textwidth}
+      \footnotesize
+      \textbf{Observed while the card is undetected}
+      \begin{itemize}\setlength{\itemsep}{0.3em}
+        \item Both fans spin for a few seconds at power-on, then stop: the firmware's fan
+          self-test, then fan-stop because the chip is cold. A healthy card does the same.
+        \item One fan occasionally restarts at idle, and the heatsink gets hot with no load:
+          without a driver the GPU sits at boot clocks and burns tens of watts.
+        \item A card with no 12\,V, or a dead core, would show neither.
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \reading{the card is powered and alive at the firmware level. The fault is in PCIe link
+    training, on the card or on the board's x16 port.}
+  \source{owner observations 2026-10-31 and 2026-11-01; hardware/motherboard.md, PSU measurement notes}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{What has been ruled out}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.0}
+  \begin{tabularx}{\textwidth}{@{}p{3.3cm}Lp{1.7cm}@{}}
+    \toprule
+    \textbf{Hypothesis} & \textbf{Test} & \textbf{Verdict} \\
+    \midrule
+    Driver 621.01 broke it & Root port is hidden by firmware before Windows loads; clean install log; 22\,h of normal operation & \ruledout \\
+    PSU dropped out & Kernel-Power 41 events carry power-button timestamps; no power-loss or crash shutdowns in the log & \ruledout \\
+    Card or cable loose & Reseated card and 8-pin on 2026-11-01; connectors and board inspected; no change & \ruledout \\
+    8-pin not delivering & Fans self-test at power-on; heatsink warms. A card without auxiliary power would refuse to start & \ruledout \\
+    Link degraded before failure & Last recorded link Gen4 x8; no AER errors on the card; WHEA errors only on the network card's port & \ruledout \\
+    Monitor or Windows install & Integrated GPU drives the same monitor at full resolution & \ruledout \\
+    Card's PCIe interface (PHY or BGA joints) & Card in a chipset slot, then another PC & \hyp \\
+    Board's CPU x16 port, slot or CPU lanes & Card in a chipset slot; BIOS link-speed test; F35 flash & \hyp \\
+    \bottomrule
+  \end{tabularx}
+  \source{diagnosis/gpu-rtx3050-missing-2026-10.md, Evidence and Ruled out sections}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{What remains: card or board}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.4\textwidth}
+      \footnotesize
+      \textbf{First, without opening the case}
+      \begin{enumerate}\setlength{\itemsep}{0.3em}
+        \item Enter setup (Del). Look for the card anywhere in the device listing.
+        \item Top slot link speed: Gen3, then Gen1. A marginal PCIe PHY sometimes trains only at
+          the lowest rate.
+        \item Load Optimized Defaults (F7), Initial Display Output = IGFX, save (F10).
+        \item Boot, run \texttt{scripts/Get-GpuState.ps1}.
+      \end{enumerate}
+      \medskip
+      Then the one test that separates card from board:
+    \end{column}
+    \begin{column}{0.58\textwidth}
+      \centering
+      \begin{tikzpicture}[node distance=0.45cm and 0.3cm]
+        \node[box=4.4cm] (q) {\textbf{Move the card to a lower slot}\\chipset, x4 electrical; boot};
+        \node[box=3.0cm,below left=0.5cm and -1.5cm of q] (yes)
+          {\textbf{Card appears}\\card is fine; CPU x16 port, slot or CPU lanes at fault};
+        \node[box=3.0cm,below right=0.5cm and -1.5cm of q] (no)
+          {\textbf{Still absent}\\card does not train PCIe at all};
+        \node[box=3.0cm,below=of yes] (flash)
+          {Flash F35, retest the top slot.\\Still absent: board or CPU under warranty};
+        \node[box=3.0cm,below=of no] (rma)
+          {Confirm in another PC if possible.\\Vendor report for the card};
+        \draw[arrow] (q.south) -- (yes.north);
+        \draw[arrow] (q.south) -- (no.north);
+        \draw[arrow] (yes) -- (flash);
+        \draw[arrow] (no) -- (rma);
+      \end{tikzpicture}
+    \end{column}
+  \end{columns}
+  \source{diagnosis note, Procedure steps 3 and 4; hardware/motherboard.md for the slot layout}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{The procedure and where we are}
+  \scriptsize
+  \renewcommand{\arraystretch}{1.05}
+  \begin{tabularx}{\textwidth}{@{}p{0.5cm}Lp{2.8cm}@{}}
+    \toprule
+    & \textbf{Step} & \textbf{Status} \\
+    \midrule
+    1 & Cold power cycle: PSU off, power button held, wait, power on, watch the fans & \donetag\ 2026-11-01 \\
+    2 & Reseat the card and the 8-pin lead; inspect contacts, slot, board and pins; read the PSU label & \donetag\ 2026-11-01, PSU label pending \\
+    3 & BIOS settings: link speed Gen3 then Gen1, Optimized Defaults, Initial Display Output & \pendingtag \\
+    4 & Card or board: card in a chipset slot; then F35 flash if the board side is suspect; another PC & \pendingtag \\
+    5 & If the card returns: block automatic driver installs, DDU clean install, watch for the crash pattern & \pendingtag \\
+    6 & If it does not: finish the vendor report with PSU, serial and purchase details, and submit & \pendingtag \\
+    \bottomrule
+  \end{tabularx}
+  \reading{steps 1 and 2 cost nothing and told us the card is powered. Step 3 is free.
+    Step 4 answers the question.}
+  \source{diagnosis/gpu-rtx3050-missing-2026-10.md, Procedure and Log}
+\end{frame}
+
+% ===============================================================
+\section{Updating the BIOS}
+
+\begin{frame}{Why F5 to F35, and where it fits}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \footnotesize
+      \textbf{What changed between F5 (2021-12) and F35}
+      \begin{itemize}\setlength{\itemsep}{0.3em}
+        \item \textbf{F23:} fix for a blank POST display with GeForce RTX 30-series cards
+        \item \textbf{F32:} Intel CSME firmware update. One-way: a BIOS older than F32 cannot be
+          flashed back afterwards
+        \item Microcode, memory compatibility and stability updates throughout
+      \end{itemize}
+      \medskip
+      Gigabyte allows the direct jump. Re-read the release notes on the support page before
+      flashing and confirm nothing says ``update to Fxx first''.
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \footnotesize
+      \textbf{The image, already downloaded and checked}
+      \begin{itemize}\setlength{\itemsep}{0.3em}
+        \item \texttt{C:/dev/mobo/bios/\ldots/}\\\texttt{Z690AORUSELITEDDR4.F35}, 32\,MiB
+        \item SHA-256 \texttt{55d90960\ldots{}3bc3ced00}
+        \item Contains the board string \texttt{Z690 AORUS ELITE DDR4}
+        \item Not committed to the repo
+      \end{itemize}
+      \medskip
+      \textbf{Where it fits}\\
+      The card ran for years on F5, so the flash alone is unlikely to revive it. Right once the
+      slot test points at the board; harmless either way.
+    \end{column}
+  \end{columns}
+  \source{bios/update-bios.md; Gigabyte support page for Z690 AORUS ELITE DDR4 rev.\ 1.x}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{Before you flash}
+  \footnotesize
+  \begin{enumerate}\setlength{\itemsep}{0.15em}
+    \item \textbf{BitLocker.} In an elevated terminal (Win+X, Terminal (Admin)):
+      \texttt{manage-bde -status C:}\\
+      If protection is on, have the recovery key to hand (Microsoft account, Devices) and suspend
+      it for one reboot: \texttt{manage-bde -protectors -disable C: -RebootCount 1}\\
+      A BIOS change alters the TPM measurements; without this Windows may demand the key.
+    \item \textbf{Record the non-default settings.} As of 2026-10-31: boot order (980 PRO) and
+      Initial Display Output. XMP is off.
+    \item \textbf{Power.} Steady mains, no storm. A power loss mid-write leaves the board
+      unbootable; Q-Flash Plus is the recovery path.
+    \item \textbf{Second device} with these notes; the machine is offline for a while.
+    \item \textbf{USB stick}, FAT32, otherwise empty. Copy \texttt{Z690AORUSELITEDDR4.F35} to its root.
+  \end{enumerate}
+  \reading{do not flash from Windows (GIGABYTE Control Center, @BIOS), and never use a file for the
+    DDR5 board or rev.\ 2.x. The file name must say DDR4.}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{Q-Flash, step by step}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{0.5\textwidth}
+      \scriptsize
+      \begin{enumerate}\setlength{\itemsep}{0.2em}
+        \item Shut down. Stick into a \textbf{rear} USB port, not a front-panel hub.
+        \item Power on. Press \textbf{End} at the Gigabyte logo for Q-Flash, or \textbf{Del} for
+          setup and then \textbf{F8}.
+        \item \textbf{Update BIOS}, choose the stick, choose \texttt{Z690AORUSELITEDDR4.F35}, confirm.
+        \item \textbf{Wait.} The screen may go dark and the machine may restart more than once
+          (CSME update). Touch nothing until setup or Windows appears.
+      \end{enumerate}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \scriptsize
+      \begin{enumerate}\setlength{\itemsep}{0.2em}\setcounter{enumi}{4}
+        \item Enter setup. \textbf{Load Optimized Defaults} (F7), \textbf{Save \& Exit} (F10).
+        \item Enter setup again. Re-apply boot order and Initial Display Output. Leave XMP off
+          unless you decide otherwise, and record it if you do.
+        \item Boot Windows. Enter the BitLocker key once if asked. If you suspended protection,
+          re-enable: \texttt{manage-bde -protectors -enable C:}
+        \item Verify and record:\\
+          \texttt{Get-CimInstance Win32\_BIOS | Select SMBIOSBIOSVersion, ReleaseDate}\\
+          then update \texttt{hardware/inventory.md} and the log in \texttt{bios/update-bios.md}.
+      \end{enumerate}
+    \end{column}
+  \end{columns}
+  \reading{about fifteen minutes. The only step with a failure mode is the wait in step 4:
+    a restart during the flash is normal, a power cut is not.}
+  \source{bios/update-bios.md}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{If it will not POST afterwards: Q-Flash Plus}
+  \begin{itemize}\setlength{\itemsep}{0.25em}
+    \item This board family can flash from USB without a working BIOS.
+    \item Rename the image to \texttt{GIGABYTE.bin}, put it alone on a FAT32 stick.
+    \item Plug the stick into the rear port marked for Q-Flash Plus (check the manual for the exact port).
+    \item System off, PSU switched on. Press the Q-Flash Plus button on the rear panel.
+    \item Wait for the LED to stop blinking, several minutes. Then power on normally.
+  \end{itemize}
+  \reading{a failed flash is recoverable on this board: an inconvenience, not a dead motherboard.}
+  \source{bios/update-bios.md; Gigabyte Z690 AORUS ELITE DDR4 manual}
+\end{frame}
+
+% ===============================================================
+\section{Next}
+
+\begin{frame}{Next steps}
+  \begin{enumerate}\setlength{\itemsep}{0.15em}
+    \item \textbf{BIOS settings test}, no case opening: link speed Gen3, then Gen1; Optimized Defaults.
+    \item \textbf{Slot test:} card in a lower slot. This decides card versus board.
+    \item \textbf{Flash F35} if the board side is suspect, as above. Then retest the top slot.
+    \item \textbf{Record} the PSU label, and whether the heatsink is warm after ten minutes idle.
+    \item \textbf{If the card returns:} no automatic driver installs; DDU clean install per
+      \texttt{drivers/nvidia.md}; watch for the crash pattern.
+    \item \textbf{If it does not:} finish the vendor report (serial from the label, PSU, purchase
+      details, checklist results) and submit it.
+  \end{enumerate}
+  \reading{every result goes in the Log table of the diagnosis note, dated. The vendor report
+    is built from that table.}
+\end{frame}
+
+% ---------------------------------------------------------------
+\begin{frame}{Sources and tools}
+  \footnotesize
+  \begin{itemize}\setlength{\itemsep}{0.3em}
+    \item \texttt{diagnosis/gpu-rtx3050-missing-2026-10.md}: symptoms, hypothesis, evidence, ruled-out table, procedure, log
+    \item \texttt{hardware/inventory.md}, \texttt{hardware/motherboard.md}: what is in the box; slots, firmware behaviour, rail tolerances
+    \item \texttt{bios/update-bios.md}: the Q-Flash procedure and its log
+    \item \texttt{drivers/nvidia.md}: driver versions, cached installers, clean-install plan
+    \item \texttt{scripts/Get-GpuState.ps1}: presence, problem code, last arrival, PCIe link of the card and root port
+    \item \texttt{scripts/Get-CrashHistory.ps1}: Kernel-Power 41 decoded, WHEA errors, WER kernel report history
+    \item \texttt{scripts/Get-HardwareInventory.ps1}: board, BIOS, CPU, RAM, disks, video
+    \item Vendor report (Claude Doc): \url{https://claude.ai/artifact/Vq7LVe2ABxcKtUVYbMFStL}
+    \item Gigabyte support: \url{https://www.gigabyte.com/Motherboard/Z690-AORUS-ELITE-DDR4-rev-1x/support}
+  \end{itemize}
+  \source{all data collected on the affected machine, 2026-10-31 and 2026-11-01, without elevation}
+\end{frame}
+
+\end{document}

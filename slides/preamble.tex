@@ -1,0 +1,94 @@
+% Shared look for every deck in this repo: Metropolis with a progress bar under each
+% frame title. Mirrors sourdough-science/slides/preamble.tex. Build with Tectonic:
+% `make` in this directory.
+
+\usetheme[progressbar=frametitle,numbering=fraction,sectionpage=progressbar,block=fill]{metropolis}
+
+% Metropolis looks Fira Sans up by system name; load it from the TeX bundle instead,
+% Light for body text as Metropolis intends, with lining figures for data.
+\usepackage[sfdefault,light,lf]{FiraSans}
+\usepackage{booktabs,tabularx,array}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
+\usepackage{pgfplots}
+\pgfplotsset{compat=newest}
+
+% Metropolis's palette, with this repo's own colour names mapped onto it.
+\definecolor{mDarkTeal}{HTML}{23373B}
+\definecolor{mLightBrown}{HTML}{EB811B}
+\colorlet{ink}{mDarkTeal}
+\definecolor{panel}{HTML}{EDF1F2}
+\colorlet{accent}{mLightBrown}
+\definecolor{flag}{HTML}{B03A2E}
+\definecolor{ok}{HTML}{2E7D4F}
+\definecolor{muted}{HTML}{7A7F80}
+
+% Top-align frames, so the \vfill in \source puts the source line at the bottom.
+% A slimmer title bar and narrower margins than Metropolis's defaults leave room
+% for the denser slides.
+\makeatletter
+\beamer@centeredfalse
+\setlength{\metropolis@frametitle@padding}{1.4ex}
+\setlength{\metropolis@progressinheadfoot@linewidth}{2pt}
+\setlength{\metropolis@progressonsectionpage@linewidth}{1.5pt}
+\setlength{\metropolis@titleseparator@linewidth}{1pt}
+% Metropolis's title page is \paperheight tall, which overflows a top-aligned frame.
+\setbeamertemplate{title page}{%
+  \begin{minipage}[b][\textheight]{\textwidth}
+    \vfill
+    \usebeamertemplate*{title}
+    \ifx\insertsubtitle\@empty\else\usebeamertemplate*{subtitle}\fi
+    \usebeamertemplate*{title separator}
+    \usebeamertemplate*{author}
+    \usebeamertemplate*{institute}
+    \usebeamertemplate*{date}
+    \vfill
+  \end{minipage}}
+\makeatother
+\setbeamersize{text margin left=1.2em,text margin right=1.2em}
+
+\setbeamertemplate{frame footer}{\insertshorttitle}
+\setbeamertemplate{footline}{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.6ex,dp=1.2ex,leftskip=1.2em,rightskip=1.2em]{footline}%
+    \usebeamerfont{page number in head/foot}%
+    \usebeamertemplate*{frame footer}\hfill\usebeamertemplate*{frame numbering}%
+  \end{beamercolorbox}}
+\setbeamerfont{page number in head/foot}{size=\tiny}
+\setbeamercolor{footline}{fg=muted}
+
+% The conclusion of a slide, in one sentence.
+\newcommand{\reading}[1]{%
+  \par\medskip
+  \colorbox{panel}{\parbox{\dimexpr\linewidth-2\fboxsep}{\small\textbf{\color{ink}What it means:} #1}}}
+
+% Small source line, placed at the bottom of a frame.
+\newcommand{\source}[1]{%
+  \vfill{\color{muted}\tiny Source: #1}}
+
+% Status tags. Filled, so they read on the dark title bar as well as on the body.
+\newcommand{\flagtag}[2]{\mbox{\setlength{\fboxsep}{1.2pt}\colorbox{#1}{\color{white}\scriptsize\bfseries\,#2\,}}}
+\newcommand{\donetag}{\flagtag{ok}{done}}
+\newcommand{\presenttag}{\flagtag{ok}{present}}
+\newcommand{\pendingtag}{\flagtag{accent}{pending}}
+\newcommand{\ruledout}{\flagtag{muted}{ruled out}}
+\newcommand{\phantomtag}{\flagtag{flag}{Code 45}}
+\newcommand{\hyp}{\flagtag{flag}{hypothesis}}
+\setbeamertemplate{frametitle continuation}[from second][(cont.)]
+
+% Nodes for TikZ diagrams: a normal box, and a box for a device that is missing.
+\tikzset{
+  box/.style={draw=ink,fill=panel,rounded corners=2pt,align=center,
+    font=\scriptsize,inner sep=4pt,text width=#1},
+  box/.default=2.6cm,
+  gone/.style={draw=flag,dashed,fill=white,rounded corners=2pt,align=center,
+    font=\scriptsize,inner sep=4pt,text width=#1},
+  gone/.default=2.6cm,
+  arrow/.style={-{Stealth[length=5pt]},draw=ink,thick},
+  gonearrow/.style={-{Stealth[length=5pt]},draw=flag,dashed,thick},
+}
+
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcommand{\muted}[1]{{\color{muted}#1}}
+
+\author{ZRRBITE-PC hardware notes}
+\institute{\texttt{C:/dev/hardware-notes}}
