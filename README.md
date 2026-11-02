@@ -24,6 +24,7 @@ worked through. The OS-level counterpart is the sibling repo
 | --- | --- |
 | [`scripts/Get-GpuState.ps1`](scripts/Get-GpuState.ps1) | Presence, problem code, last arrival and PCIe link state of the RTX 3050, its audio function and the CPU x16 root port. Includes phantom devices. Run first whenever the card misbehaves. |
 | [`scripts/Get-CrashHistory.ps1`](scripts/Get-CrashHistory.ps1) | Unexpected shutdowns decoded (blue screen vs power button vs power loss), WHEA hardware errors, and the Windows Error Reporting history of GPU live kernel events and blue screens. |
+| [`scripts/Watch-GpuHealth.ps1`](scripts/Watch-GpuHealth.ps1) | Live health watch for the RTX 3050: samples nvidia-smi and the PnP state every few seconds, watches the event logs, logs to CSV under `%LOCALAPPDATA%\hardware-notes\gpu-watch\`, and raises an alarm (beep, toast, `alarms.log`) on Code 45, a link below Gen4 x8 under load, replay-counter increases, TDRs, WHEA on the GPU path and LiveKernelEvents. `-Once` for a single sample, `-ReplayDays N` to run the classifier over past logs. |
 | [`scripts/Get-HardwareInventory.ps1`](scripts/Get-HardwareInventory.ps1) | Board, BIOS, CPU, RAM, disks, video. Paste into hardware/inventory.md after a change. |
 
 ## Slides

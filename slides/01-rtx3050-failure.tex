@@ -417,8 +417,8 @@
 \begin{frame}{Next steps}
   \begin{enumerate}\setlength{\itemsep}{0.15em}
     \item \textbf{Leave the card in the top slot.} Decline driver offers from NVIDIA App and Windows Update.
-    \item \textbf{Watch it:} \texttt{scripts/Get-GpuState.ps1} after each boot for a week. Code 45
-      again, or a link below Gen4 x8 under load, means the fault is back.
+    \item \textbf{Watch it:} \texttt{scripts/Watch-GpuHealth.ps1} runs live and alarms on Code 45,
+      a link below Gen4 x8 under load, replays, TDRs and WHEA on the GPU path.
     \item \textbf{Crash history:} \texttt{scripts/Get-CrashHistory.ps1 -Since 2026-11-01} weekly.
       If the marginal link caused the May to October timeouts, they stop now.
     \item \textbf{Driver:} 617.42 since 2026-11-01 evening; 621.01 lagged. First games clean. DDU in reserve.
