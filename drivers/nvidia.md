@@ -43,6 +43,14 @@ NVIDIA acknowledges a video-freeze and transient black-screen bug in 621.01; the
 
 Download used: `https://us.download.nvidia.com/Windows/617.42/617.42-desktop-win10-win11-64bit-international-dch-whql.exe` (945 MB).
 
+## NVIDIA App 11.0.9.565 on 617.42: the Graphics page never loads
+
+Seen 2026-11-02 20:18. The app was left as installed with 621.01 (unticked during the 617.42 install). Its Graphics page spins indefinitely. From the app's own logs: `GetProfileSettingsInfo` through `NvCplPlugin` is called at 20:19:38 and never returns; `NvCplApi` `GetSetting` calls fail with error 5; the container log shows `NvAPI_AccessDisplayDriverRegistry` ending in `NVAPI_ERROR`. The classic NVIDIA Control Panel (Store app `NVIDIACorp.NVIDIAControlPanel`) is not installed, so the app is the only GUI for 3D settings on this machine.
+
+What this means for settings: the driver profile database `C:\ProgramData\NVIDIA Corporation\Drs\nvdrsdb*.bin` was last written 2026-11-01 20:08:11, during the 617.42 clean install, and not since. No 3D setting has been changed on 617.42, so **Power management mode is at its default, Normal**; the "Prefer maximum performance" set under 621.01 did not survive the clean install.
+
+If the page is needed: exit the app from its tray icon and relaunch. If it still spins, reinstall NVIDIA App from nvidia.com so its driver-settings component matches the installed driver. Automatic driver download must be turned off again after a reinstall.
+
 ## Clean-install plan, once the card is back on the bus
 
 Status 2026-11-02 16:28: step 4 done with 617.42 (installer clean install, no DDU, step 3 skipped). Steps 2 and 5 done 2026-11-02 16:28: `ExcludeWUDriversInQualityUpdate` = 1, read back from the registry. NVIDIA App (installed, 11.0.9.565): automatic driver downloads turned off by the owner 2026-11-02 about 16:30 (owner report; the app keeps the setting in its own store, so it is not verified from disk). Nothing in this plan is open now; DDU stays in reserve. Step 6 baseline: `Get-GpuState.ps1` shows the card at Gen4 x8, driver 32.0.16.1742. Checked 21:56 after the first gaming session: no Display, nvlddmkm or WHEA events since the 20:07 boot, replay counter 0. DDU stays in reserve if problems return.
