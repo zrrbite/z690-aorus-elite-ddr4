@@ -7,7 +7,7 @@ NVIDIA's release number is the last five digits of the Windows driver version: `
 | Installed | Version | How | Notes |
 | --- | --- | --- | --- |
 | 2026-07-08 | 610.74 (32.0.16.1074) | NVIDIA App; installer cached | Running at the 2026-09-05 display-fallback incident |
-| 2026-10-23 | 610.88 (32.0.16.1088) | Probably Windows Update | Blue screen the same day |
+| 2026-10-23 04:43 | 610.88 (32.0.16.1088) | Windows Update, automatic (confirmed from the update history, see below) | Blue screen the same day |
 | 2026-10-29 17:48 | 621.01 (32.0.16.2101) | NVIDIA App. "Setting clean install: 0", "Reboot not required", "Installation is successful." | Card vanished about 22 h later; not the cause (see diagnosis). Once the card was back and driving the display (2026-11-01), this version lagged on the desktop; see below |
 | 2026-11-01 20:03 | 617.42 (32.0.16.1742, driver date 2026-09-30) | Standalone installer from NVIDIA's server, Custom > Perform a clean installation, NVIDIA App unticked. DDU not used. Boot 20:07 | Desktop lag gone. Card idles in P8/Gen1 on the desktop instead of cycling to P0. First gaming session the same evening ran clean (no GPU events, replay counter 0). Installer file location not recorded |
 
@@ -22,6 +22,18 @@ One orphaned driver-store folder (`nv_dispi.inf_amd64_6f3cfb7117944855`) has no 
 | 595.79 | `C:\Users\kjeld\Downloads\595.79-desktop-win10-win11-64bit-international-dch-whql.exe` |
 
 Installer log: `C:\ProgramData\NVIDIA Corporation\NVIDIA App\Logs\LOG.setup.exe.log`.
+
+## Windows Update does install this card's driver
+
+Checked 2026-11-02 from the Windows Update history (`Microsoft.Update.Session`, 573 entries). Three NVIDIA display driver installs came through Windows Update, all with result Succeeded:
+
+| Date | Windows Update title | Note |
+| --- | --- | --- |
+| 2026-06-21 17:30 | NVIDIA Display Driver Update (32.0.15.9186) | 591.86 |
+| 2026-07-08 20:52 | NVIDIA - Display - 27.21.14.5671 | An old 2020-era package (456.71). Same evening as the 610.74 install by NVIDIA App, which presumably replaced it |
+| 2026-10-23 04:43 | NVIDIA Display Driver Update (32.0.16.1088) | 610.88, installed overnight without anyone at the machine. Blue screen later that day |
+
+So Windows Update can and does replace the NVIDIA driver here, unattended. It only installs a package newer than the one present, and NVIDIA publishes its WHQL releases to Windows Update some weeks after the release. 621.01 (2026-10-21) is newer than 617.42, so once it reaches Windows Update it will be offered or installed. The policy value in step 5 below stops drivers from arriving with quality updates; Settings > Windows Update > Advanced options > Optional updates still lists them for manual install.
 
 ## Known issues in 621.01
 
