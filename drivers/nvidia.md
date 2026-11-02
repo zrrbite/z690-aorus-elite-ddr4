@@ -49,7 +49,7 @@ Seen 2026-11-02 20:18. The app was left as installed with 621.01 (unticked durin
 
 What this means for settings: the driver profile database `C:\ProgramData\NVIDIA Corporation\Drs\nvdrsdb*.bin` was last written 2026-11-01 20:08:11, during the 617.42 clean install, and not since. No 3D setting has been changed on 617.42, so **Power management mode is at its default, Normal**; the "Prefer maximum performance" set under 621.01 did not survive the clean install.
 
-If the page is needed: exit the app from its tray icon and relaunch. If it still spins, reinstall NVIDIA App from nvidia.com so its driver-settings component matches the installed driver. Automatic driver download must be turned off again after a reinstall.
+The page did load on a later attempt the same evening, about 22:48 (owner report), so the hang is intermittent. If it spins: exit the app from its tray icon and relaunch. If it still spins, reinstall NVIDIA App from nvidia.com so its driver-settings component matches the installed driver. Automatic driver download must be turned off again after a reinstall.
 
 ## Clean-install plan, once the card is back on the bus
 
