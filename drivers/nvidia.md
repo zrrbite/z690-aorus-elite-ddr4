@@ -45,7 +45,7 @@ Download used: `https://us.download.nvidia.com/Windows/617.42/617.42-desktop-win
 
 ## Clean-install plan, once the card is back on the bus
 
-Status 2026-11-01 20:10: step 4 done with 617.42 (installer clean install, no DDU, step 3 skipped). Steps 2 and 5 **not done yet**: the Windows Update driver block is not set, and NVIDIA App (still installed, 11.0.9) has not had automatic driver downloads turned off. Step 6 baseline: `Get-GpuState.ps1` shows the card at Gen4 x8, driver 32.0.16.1742. Checked 21:56 after the first gaming session: no Display, nvlddmkm or WHEA events since the 20:07 boot, replay counter 0. DDU stays in reserve if problems return.
+Status 2026-11-02 16:28: step 4 done with 617.42 (installer clean install, no DDU, step 3 skipped). Steps 2 and 5 done 2026-11-02 16:28: `ExcludeWUDriversInQualityUpdate` = 1, read back from the registry. **Still open:** NVIDIA App (installed, 11.0.9.565) has not had automatic driver downloads turned off. Step 6 baseline: `Get-GpuState.ps1` shows the card at Gen4 x8, driver 32.0.16.1742. Checked 21:56 after the first gaming session: no Display, nvlddmkm or WHEA events since the 20:07 boot, replay counter 0. DDU stays in reserve if problems return.
 
 Do this before the card receives any other driver. The crash history spans at least four driver packages, so a clean slate removes one variable before deciding the card is faulty.
 
