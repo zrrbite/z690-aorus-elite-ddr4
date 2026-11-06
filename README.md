@@ -14,6 +14,7 @@ worked through. The OS-level counterpart is the sibling repo
 | Motherboard: Gigabyte Z690 AORUS ELITE DDR4 | [hardware/motherboard.md](hardware/motherboard.md) |
 | BIOS update procedure (Q-Flash) | [bios/update-bios.md](bios/update-bios.md) |
 | GPU failure, Oct 2026: RTX 3050 gone from the PCIe bus | [diagnosis/gpu-rtx3050-missing-2026-10.md](diagnosis/gpu-rtx3050-missing-2026-10.md) |
+| Battle.net will not start, Nov 2026: its files zero-filled by the 2026-09-26 crash | [diagnosis/battlenet-zero-filled-2026-09-26.md](diagnosis/battlenet-zero-filled-2026-09-26.md) |
 | NVIDIA driver notes and clean-install plan | [drivers/nvidia.md](drivers/nvidia.md) |
 | Remote access (SSH) | [remote-access/ssh.md](remote-access/ssh.md) |
 | Slides: the GPU failure and the BIOS update as a Beamer deck | [slides/01-rtx3050-failure.pdf](slides/01-rtx3050-failure.pdf) |
