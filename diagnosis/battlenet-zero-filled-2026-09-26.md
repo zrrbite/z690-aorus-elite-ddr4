@@ -1,6 +1,6 @@
 # Battle.net desktop app does not start: its files were zero-filled by the 2026-09-26 crash
 
-**Status (2026-11-06 18:10):** diagnosed, not yet repaired. Fix: run Battle.net-Setup.exe again (section "Fix").
+**Status (2026-11-06 18:15):** repaired 2026-11-06 18:06 by rerunning Battle.net-Setup.exe (section "Repair"). Battle.net 2.53.8.17986 starts and runs.
 
 ## Symptom
 
@@ -63,6 +63,18 @@ No Blizzard game is installed through Battle.net on this machine (Diablo II: Res
    Expected `Valid`.
 
 Fallback without a download, elevated: copy `temp_55378fa22eff4403dae46bf6f2453db5.exe` over `Battle.net.exe`. The app then runs 2.53.0.17840 from the intact `Battle.net.17840` folder and updates itself, which rewrites the 17862 files. The zeroed Agent `product.db` may still need the installer to recover, so the installer is the first choice.
+
+## Repair, 2026-11-06 18:05 to 18:06
+
+Done from this session at the owner's request. `Battle.net-Setup.exe` fetched from `https://downloader.battle.net/download/getInstaller?os=win&installer=Battle.net-Setup.exe` (resolves to `.../download/installer/win/1.0.69/Battle.net-Setup.exe`): 4 700 880 bytes, version 2.0.0.4232, SHA-256 `F4643A2086C0CECB1AB68CC601BF38C1A0A6F7EF5914AD03375CC9449385BEC6`, Authenticode Valid, signer Blizzard Entertainment, Inc. (DigiCert Trusted G4 code signing). Launched 18:05:33; UAC approved by the owner 18:05:34; elevated setup 18:05:37; Agent 18:05:47; bootstrapper finished 18:06:13; Battle.net started 18:06:13 with its main window up. The install itself took under a minute.
+
+| Item | Before | After |
+| --- | --- | --- |
+| `Battle.net.exe` | 992 464 B of zeros | 2.53.8.17986, 995 536 B, signature Valid, written 18:05:56 |
+| Versioned folder | `Battle.net.17862`: Helper.dll and 165 locale paks zeroed | `Battle.net.17986`, written 18:06:09, Helper.dll and every pak intact (0 zero-headed) |
+| Agent | 2.41.0.9775, `product.db` zeroed | 2.41.2.9852 in `Agent.9852`, `product.db` rewritten 18:06:28 (708 B) |
+
+Left behind, unused: `Battle.net.17862` with its zeroed files. The installer removed `Battle.net.17840`, `Battle.net.17821` and the `temp_...exe` copy. No Application Error or WER events after the start; the app log holds one JavaScript exception from the shop webview and CEF "Unsupported codec by MfAudioDecoder" lines, both cosmetic. The setup log also reports that it repaired folder and file permissions under `C:\ProgramData\Blizzard Entertainment\Battle.net\Cache`. Note that the logs under `C:\ProgramData\Battle.net\Setup` are in UTC.
 
 ## Lesson
 
